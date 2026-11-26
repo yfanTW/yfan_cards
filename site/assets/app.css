@@ -55,6 +55,8 @@ h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
   background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
 }
 .pill.on { background: rgba(99,102,241,0.25); color: #c7d2fe; border-color: rgba(99,102,241,0.5); }
+.pill .pcount { opacity: .55; font-size: 11px; margin-left: 2px; font-variant-numeric: tabular-nums; }
+.pill.on .pcount { opacity: .8; }
 
 .count { font-size: 13px; color: var(--dim); margin: 4px 0 12px; }
 .count strong { color: var(--muted); }

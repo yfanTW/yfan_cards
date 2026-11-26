@@ -105,9 +105,14 @@ function renderControls() {
   const groups = ["All", ...PROD.groups.filter(g => PROD.cards.some(c => c.group === g))];
   $("groups").innerHTML = `<div class="seg">${groups.map(g =>
     `<button class="btn ${S.group === g ? "on" : ""}" data-v="${esc(g)}">${g === "All" ? "全部" : esc(g)}</button>`).join("")}</div>`;
-  const sets = [...new Set(PROD.cards.filter(c => S.group === "All" || c.group === S.group).map(c => c.set))];
+  // Total cards per set (within the chosen group); fixed counts, not affected by search/RC filters.
+  const inGroup = PROD.cards.filter(c => S.group === "All" || c.group === S.group);
+  const setCount = new Map();
+  inGroup.forEach(c => setCount.set(c.set, (setCount.get(c.set) || 0) + 1));
+  const sets = [...setCount.keys()];
   $("sets").innerHTML = sets.length > 1 ? ["All", ...sets].map(s =>
-    `<button class="pill ${S.set === s ? "on" : ""}" data-v="${esc(s)}">${s === "All" ? "所有子系列" : esc(s)}</button>`).join("") : "";
+    `<button class="pill ${S.set === s ? "on" : ""}" data-v="${esc(s)}">${s === "All" ? "所有子系列" : esc(s)}` +
+    ` <span class="pcount">(${s === "All" ? inGroup.length : setCount.get(s)})</span></button>`).join("") : "";
   const teams = [...new Set(PROD.cards.flatMap(c => splitMulti(c.team).map(franchise)))].sort();
   $("team").innerHTML = `<option value="All">所有球隊</option>` + teams.map(t =>
     `<option value="${esc(t)}" ${S.team === t ? "selected" : ""}>${esc(t)}</option>`).join("");
