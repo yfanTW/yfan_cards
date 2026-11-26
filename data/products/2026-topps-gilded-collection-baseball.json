@@ -6170,5 +6170,7 @@
       "note": ""
     }
   ],
-  "pulled_sets": []
+  "pulled_sets": [
+    "24K"
+  ]
 }
