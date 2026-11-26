@@ -6,11 +6,3 @@
 - 資料：`data/`（格式見 [DATA_FORMAT.md](DATA_FORMAT.md)）
 
 資料由管理工具（獨立的私人 repo）更新，本 repo 不含任何可修改資料的程式。
-
-本機預覽（在上一層資料夾執行）：
-
-```powershell
-python -m http.server 8080 --directory card-checklist
-```
-
-然後開 http://localhost:8080/site/
