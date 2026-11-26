@@ -67,17 +67,6 @@
       "image_v": 1795690592
     },
     {
-      "slug": "2026-bowman-baseball",
-      "name": "2026 Bowman Baseball",
-      "year": 2026,
-      "brand": "Topps",
-      "sport": "Baseball",
-      "release_date": "",
-      "updated": "2026-11-26",
-      "image": "images/2026-bowman-baseball.webp",
-      "image_v": 1795690651
-    },
-    {
       "slug": "2026-bowman-chrome",
       "name": "2026 Bowman Chrome",
       "year": 2026,
@@ -87,6 +76,17 @@
       "updated": "2026-11-26",
       "image": "images/2026-bowman-chrome.webp",
       "image_v": 1795703150
+    },
+    {
+      "slug": "2026-bowman-baseball",
+      "name": "2026 Bowman Baseball",
+      "year": 2026,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "release_date": "",
+      "updated": "2026-11-26",
+      "image": "images/2026-bowman-baseball.webp",
+      "image_v": 1795690651
     }
   ]
 }
