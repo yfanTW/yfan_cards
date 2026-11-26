@@ -97,6 +97,14 @@ function renderControls() {
     `<option value="${esc(t)}" ${S.team === t ? "selected" : ""}>${esc(t)}</option>`).join("");
   document.querySelectorAll("#rc .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.rc));
   document.querySelectorAll("#first .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.first));
+  // The pulled filter only makes sense once the view is narrowed to a group / set that
+  // tracks pulled cards (e.g. Autograph Relic → MLB Debut Patch Autographs).
+  const tracked = new Set(PROD.pulled_sets || []);
+  const scoped = S.group !== "All" || S.set !== "All";
+  const showPulled = scoped && PROD.cards.some(c => tracked.has(c.set) &&
+    (S.group === "All" || c.group === S.group) && (S.set === "All" || c.set === S.set));
+  $("pulled").hidden = !showPulled;
+  if (!showPulled) S.pulled = "All";
   document.querySelectorAll("#pulled .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.pulled));
   $("favonly").classList.toggle("on", S.fav);
 }
@@ -367,7 +375,6 @@ document.addEventListener("click", e => {
       (PROD.use_first ? ` · ${PROD.cards.filter(c => c.first).length} 張 1st` : "");
     $("first").hidden = !PROD.use_first;
     const tracked = PROD.cards.filter(c => (PROD.pulled_sets || []).includes(c.set));
-    $("pulled").hidden = !tracked.length;
     if (tracked.length) $("subtitle").textContent += ` · ${PROD.cards.filter(c => c.pulled).length} / ${tracked.length} 張已抽出`;
     $("controls").hidden = false;
     $("view").hidden = false;
