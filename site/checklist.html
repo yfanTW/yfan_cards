@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checklist</title>
 <link rel="stylesheet" href="assets/app.css">
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -337,6 +339,7 @@ $("favonly").addEventListener("click", () => { S.fav = !S.fav; render(); });
 $("view").addEventListener("click", e => {
   const b = e.target.closest("[data-v]"); if (!b) return;
   S.view = b.dataset.v;
+  track("view_change", { product: slug, view: S.view });
   document.querySelectorAll("#view .btn").forEach(x => x.classList.toggle("on", x === b));
   T.team = null;
   syncHash();
@@ -361,10 +364,14 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   if (b.dataset.act === "card") {
     const c = PROD.cards[+b.dataset.k.split("|")[1]];
-    toast(Fav.toggleCard(slug, c) ? "已加入最愛卡片" : "已移除最愛卡片");
+    const on = Fav.toggleCard(slug, c);
+    if (on) track("favorite_add", { type: "card", product: slug });
+    toast(on ? "已加入最愛卡片" : "已移除最愛卡片");
   } else {
     const n = b.dataset.name;
-    toast(Fav.togglePlayer(n) ? `已將 ${n} 加入最愛球員` : `已移除最愛球員 ${n}`);
+    const on = Fav.togglePlayer(n);
+    if (on) track("favorite_add", { type: "player", product: slug });
+    toast(on ? `已將 ${n} 加入最愛球員` : `已移除最愛球員 ${n}`);
   }
   renderList();
 });
@@ -375,6 +382,7 @@ document.addEventListener("click", e => {
     await loadTeams();
     PROD = await loadJSON("products/" + slug + ".json");
     document.title = PROD.name + " Checklist";
+    track("view_product", { product: slug });
     $("title").textContent = PROD.name;
     const rc = PROD.cards.filter(c => c.rc).length;
     $("subtitle").textContent = `${PROD.cards.length} 張卡片 · ${new Set(PROD.cards.map(c => c.set)).size} 個子系列 · ${rc} 張 RC` +
