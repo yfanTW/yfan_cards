@@ -22,6 +22,8 @@
 
 - `slug`：產品唯一代號，只能用小寫英數字和 `-`，也是檔名 `data/products/<slug>.json`。**建立後不可更改**（使用者的最愛會用到它）。
 - `card_count` 不存，網站自己算。
+- **順序**：`products` 陣列的順序就是首頁同一年內的顯示順序（年份之間依年份新到舊）。
+- `image`（選用）：首頁卡片圖片，路徑相對於 `data/`，例如 `"images/2026-bowman-baseball.webp"`；`image_v` 是上傳時間，用來讓瀏覽器重新抓新圖。
 
 ## 2. 產品 checklist `data/products/<slug>.json`
 

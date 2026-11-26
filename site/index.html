@@ -26,9 +26,14 @@ function render() {
   const years = [...new Set(list.map(p => p.year))].sort((a, b) => b - a);
   $("list").innerHTML = list.length ? years.map(y => `<div class="section-title">${esc(y)}</div><div class="grid">${
     list.filter(p => p.year === y).map(p => `<a class="prod" href="checklist.html?p=${encodeURIComponent(p.slug)}">
-      <h3>${esc(p.name)}</h3><p>${esc([p.brand, p.sport].filter(Boolean).join(" · "))}${p.updated ? " · 更新 " + esc(p.updated) : ""}</p></a>`).join("")
+      ${p.image ? `<img class="pimg" src="${esc(DATA_BASE + p.image)}?v=${esc(p.image_v || "")}" alt="${esc(p.name)}" loading="lazy">`
+                : `<div class="pimg none" style="--h:${hue(p.slug)}"><span>${esc(shortName(p.name))}</span></div>`}
+      <div class="pbody"><h3>${esc(p.name)}</h3><p>${esc([p.brand, p.sport].filter(Boolean).join(" · "))}${p.updated ? " · 更新 " + esc(p.updated) : ""}</p></div></a>`).join("")
   }</div>`).join("") : `<div class="empty">沒有符合的產品</div>`;
 }
+// Placeholder art for products without an image: a stable colour per product + short name.
+function hue(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+function shortName(n) { return n.replace(/^\d{4}\s+/, "").replace(/\s+Baseball$/i, ""); }
 function favCount() {
   const n = Object.keys(Fav.data.cards).length + Object.keys(Fav.data.players).length;
   $("favcount").textContent = n ? `(${n})` : "";
