@@ -129,6 +129,30 @@ textarea.input { width: 100%; min-height: 90px; font-family: ui-monospace, Conso
 .icon.sm { width: 24px; height: 24px; font-size: 14px; }
 .morebtn { margin-top: 8px; width: 100%; padding: 8px 0; border: 1px dashed var(--line); border-radius: 6px; background: transparent; color: #a5b4fc; font-size: 12px; font-weight: 600; cursor: pointer; }
 
+/* team view */
+.hint { font-size: 12px; color: var(--dim); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: rgba(15,23,42,0.45); }
+.ttable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ttable th { position: sticky; top: 0; background: #1e293b; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .3px; text-align: right; padding: 10px 10px; cursor: pointer; white-space: nowrap; user-select: none; border-bottom: 1px solid var(--line); }
+.ttable th:hover { color: var(--text); }
+.ttable th.rc { color: var(--rc); } .ttable th.first { color: #22d3ee; }
+.ttable td { text-align: right; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+.ttable td.rc { color: #fcd34d; } .ttable td.first { color: #67e8f9; }
+.ttable td.zero { color: #334155; }
+.ttable .tname { text-align: left; font-family: inherit; position: sticky; left: 0; background: #172033; min-width: 190px; }
+.ttable th.tname { background: #1e293b; z-index: 1; }
+.ttable tbody tr { cursor: pointer; }
+.ttable tbody tr:hover td { background: rgba(99,102,241,0.1); }
+.ttable .tname .abbr { display: inline-block; min-width: 38px; text-align: center; margin-right: 8px; }
+.tfull { font-weight: 600; }
+.tbar { height: 3px; margin-top: 5px; border-radius: 2px; background: rgba(255,255,255,0.05); overflow: hidden; }
+.tbar div { height: 100%; opacity: .8; }
+.ttable tfoot td { font-weight: 700; color: var(--muted); border-top: 1px solid var(--line); border-bottom: none; }
+.teamhead { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 14px; border-radius: 12px; background: rgba(15,23,42,0.45); border: 1px solid var(--line); border-left: 5px solid var(--team); }
+.abbr.big { font-size: 16px; padding: 8px 12px; border-radius: 8px; }
+.tht { font-size: 20px; font-weight: 800; }
+.chip b.rc { color: var(--rc); } .chip b.first { color: #22d3ee; } .chip b { color: #a5b4fc; }
+
 @media (max-width: 640px) {
   .wrap { padding: 16px 12px 48px; }
   h1 { font-size: 22px; }
@@ -141,4 +165,7 @@ textarea.input { width: 100%; min-height: 90px; font-family: ui-monospace, Conso
   .viewtoggle { display: flex; } .viewtoggle .btn { flex: 1; }
   .cards.mini { margin-left: 4px; }
   .cards.mini .card { grid-template-columns: 1fr auto; }
+  .ttable .tname { min-width: 120px; }
+  .ttable .tfull { display: none; }
+  .ttable td, .ttable th { padding: 7px 8px; }
 }

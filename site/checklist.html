@@ -17,6 +17,7 @@
   <div class="seg viewtoggle" id="view" hidden>
     <button class="btn on" data-v="list">清單</button>
     <button class="btn" data-v="stats">統計</button>
+    <button class="btn" data-v="teams">球隊</button>
   </div>
 
   <div class="panel" id="controls" hidden>
@@ -58,6 +59,7 @@ const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "Al
 const OPEN = new Set();     // expanded stats rows ("team:..." / "player:...")
 const SHOW_ALL = new Set(); // stats lists showing more than the top 15
 const TOP = 15;
+const T = { cols: "group", sort: "total", desc: true, team: null };   // team view state
 const $ = id => document.getElementById(id);
 
 function matches(c, i) {
@@ -93,7 +95,7 @@ function renderControls() {
 
 function renderList() {
   let rows = PROD.cards.map((c, i) => [c, i]).filter(([c, i]) => matches(c, i));
-  $("sort").hidden = S.view === "stats";
+  $("sort").hidden = S.view !== "list";
   const by = {
     number: (a, b) => collator.compare(a[0].no, b[0].no),
     player: (a, b) => collator.compare(a[0].player, b[0].player),
@@ -104,6 +106,7 @@ function renderList() {
     (filtered ? `<button class="linkbtn" id="clear">清除篩選</button>` : "");
   if (!rows.length) { $("list").innerHTML = `<div class="empty">${S.fav ? "這個產品還沒有最愛的卡片或球員" : "沒有符合條件的卡片"}</div>`; return; }
   if (S.view === "stats") { $("list").innerHTML = renderStats(rows); return; }
+  if (S.view === "teams") { $("list").innerHTML = T.team ? renderTeamDetail(rows, T.team) : renderTeamTable(rows); return; }
 
   if (by) { rows.sort(by); $("list").innerHTML = `<div class="cards">${rows.map(([c, i]) => cardRow(slug, c, i)).join("")}</div>`; return; }
   // Original order: grouped by set with a heading.
@@ -179,8 +182,122 @@ function rankBox(id, title, unit, items, plain) {
   </div>`;
 }
 
+// ── Team view: per-team counts under each condition, and per-team card lists ──
+function teamsOf(c) { return [...new Set(splitMulti(c.team).map(franchise))]; }
+
+// Count columns: totals and specials first, then one column per group or per set.
+function teamColumns(rows) {
+  const cols = [{ k: "total", label: "總數", test: () => true },
+                { k: "rc", label: "RC", test: c => c.rc, cls: "rc" }];
+  if (PROD.use_first) cols.push({ k: "first", label: "1st", test: c => c.first, cls: "first" });
+  const present = T.cols === "set"
+    ? [...new Set(rows.map(r => r[0].set))]
+    : PROD.groups.filter(g => rows.some(r => r[0].group === g));
+  present.forEach(v => cols.push({ k: (T.cols === "set" ? "set:" : "group:") + v, label: v,
+    test: T.cols === "set" ? (c => c.set === v) : (c => c.group === v) }));
+  return cols;
+}
+
+function teamCounts(rows, cols) {
+  const m = new Map();
+  for (const r of rows) for (const t of teamsOf(r[0])) {
+    if (!m.has(t)) m.set(t, { team: t, rows: [], n: Object.fromEntries(cols.map(c => [c.k, 0])) });
+    const e = m.get(t); e.rows.push(r);
+    cols.forEach(c => { if (c.test(r[0])) e.n[c.k]++; });
+  }
+  return [...m.values()];
+}
+
+function renderTeamTable(rows) {
+  const cols = teamColumns(rows);
+  if (T.sort !== "name" && !cols.some(c => c.k === T.sort)) T.sort = "total";
+  const list = teamCounts(rows, cols).sort((a, b) =>
+    T.sort === "name" ? collator.compare(a.team, b.team) * (T.desc ? -1 : 1)
+                      : (b.n[T.sort] - a.n[T.sort]) * (T.desc ? 1 : -1) || collator.compare(a.team, b.team));
+  const totals = Object.fromEntries(cols.map(c => [c.k, rows.filter(r => c.test(r[0])).length]));
+  const arrow = k => T.sort === k ? (T.desc ? " ▼" : " ▲") : "";
+  const max = Math.max(1, ...list.map(e => e.n.total));
+  return `<div class="row" style="margin-bottom:12px">
+      <div class="seg" id="tcols">
+        <button class="btn ${T.cols === "group" ? "on" : ""}" data-cols="group">依大分類</button>
+        <button class="btn ${T.cols === "set" ? "on" : ""}" data-cols="set">依子系列</button>
+      </div>
+      <span class="hint">${list.length} 支球隊 · 點欄位標題排序 · 點球隊看卡片清單</span>
+    </div>
+    <div class="tablewrap"><table class="ttable">
+      <thead><tr>
+        <th class="tname" data-sort="name">球隊${arrow("name")}</th>
+        ${cols.map(c => `<th data-sort="${esc(c.k)}" class="${c.cls || ""}">${esc(c.label)}${arrow(c.k)}</th>`).join("")}
+      </tr></thead>
+      <tbody>${list.map(e => {
+        const info = teamInfo(e.team);
+        return `<tr data-team="${esc(e.team)}">
+          <td class="tname"><span class="abbr" style="background:${esc(info.color)}">${esc(info.abbr)}</span><span class="tfull">${esc(e.team)}</span>
+            <div class="tbar"><div style="width:${Math.round(e.n.total / max * 100)}%;background:${esc(info.color)}"></div></div></td>
+          ${cols.map(c => `<td class="${c.cls || ""} ${e.n[c.k] ? "" : "zero"}">${e.n[c.k] || "–"}</td>`).join("")}
+        </tr>`;
+      }).join("")}</tbody>
+      <tfoot><tr><td class="tname">合計（卡片數）</td>${cols.map(c => `<td class="${c.cls || ""}">${totals[c.k]}</td>`).join("")}</tr></tfoot>
+    </table></div>
+    <div class="hint" style="margin-top:8px">雙人卡會同時算進兩支球隊，所以各隊加總可能大於合計。</div>`;
+}
+
+function renderTeamDetail(rows, team) {
+  const mine = rows.filter(r => teamsOf(r[0]).includes(team));
+  const info = teamInfo(team);
+  const cols = teamColumns(mine);
+  const counts = cols.map(c => [c, mine.filter(r => c.test(r[0])).length]);
+  // Players on this team (a dual card's other player may be on another team).
+  const players = new Map();
+  for (const [c] of mine) {
+    const ps = splitMulti(c.player), ts = splitMulti(c.team);
+    ps.forEach((p, j) => {
+      const pt = franchise(ts[j] || ts[0] || "");
+      if (pt !== team && ps.length > 1) return;
+      const e = players.get(p) || { n: 0, rc: false, first: false };
+      e.n++; e.rc = e.rc || c.rc; e.first = e.first || !!c.first; players.set(p, e);
+    });
+  }
+  const plist = [...players].sort((a, b) => b[1].n - a[1].n || collator.compare(a[0], b[0]));
+  let html = "", cur = null, buf = [];
+  const flush = () => { if (cur !== null) html += `<div class="sethead">${esc(cur)} <small>${buf.length} 張</small></div><div class="cards">${buf.join("")}</div>`; };
+  for (const g of PROD.groups) for (const [c, i] of mine.filter(r => r[0].group === g)) {
+    const head = g + " · " + c.set;
+    if (head !== cur) { flush(); cur = head; buf = []; }
+    buf.push(cardRow(slug, c, i));
+  }
+  flush();
+  return `<button class="linkbtn" id="tback" style="margin:0 0 12px">← 所有球隊</button>
+    <div class="teamhead" style="--team:${esc(info.color)}">
+      <span class="abbr big" style="background:${esc(info.color)}">${esc(info.abbr)}</span>
+      <div><div class="tht">${esc(team)}</div><div class="sub">${mine.length} 張卡片 · ${plist.length} 位球員</div></div>
+    </div>
+    <div class="chips">${counts.filter(([c, n]) => n || c.k === "total").map(([c, n]) =>
+      `<div class="chip"><span>${esc(c.label)}</span><b class="${c.cls || ""}">${n}</b></div>`).join("")}</div>
+    <div class="statbox" style="margin-bottom:14px"><div class="stattitle">球員</div>
+      <div class="pills" style="flex-wrap:wrap">${plist.map(([p, e]) =>
+        `<button class="pill ${Fav.hasPlayer(p) ? "on" : ""}" data-act="player" data-name="${esc(p)}" title="點一下加入/移除最愛球員">${Fav.hasPlayer(p) ? "★" : "☆"} ${esc(p)} ${e.rc ? '<span class="badge rc">RC</span>' : ""}${e.first ? '<span class="badge first">1st</span>' : ""} <span style="opacity:.6">${e.n}</span></button>`).join("")}</div>
+    </div>
+    ${html || '<div class="empty">沒有符合條件的卡片</div>'}`;
+}
+
 function render() { renderControls(); renderList(); }
 window.onFavsChanged = renderList;
+
+// URL hash keeps the view shareable: #stats, #teams, #team=New%20York%20Yankees
+function syncHash() {
+  const h = S.view === "teams" && T.team ? "#team=" + encodeURIComponent(T.team) : S.view !== "list" ? "#" + S.view : "";
+  history.replaceState(null, "", location.pathname + location.search + h);
+}
+function readHash() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  const view = h.startsWith("team=") ? "teams" : ["stats", "teams"].includes(h) ? h : "list";
+  S.view = view;
+  T.team = h.startsWith("team=") ? h.slice(5) : null;
+  document.querySelectorAll("#view .btn").forEach(x => x.classList.toggle("on", x.dataset.v === view));
+  renderList();
+}
+window.addEventListener("hashchange", () => PROD && readHash());
 
 // ── Events ──
 let qTimer;
@@ -196,13 +313,21 @@ $("view").addEventListener("click", e => {
   const b = e.target.closest("[data-v]"); if (!b) return;
   S.view = b.dataset.v;
   document.querySelectorAll("#view .btn").forEach(x => x.classList.toggle("on", x === b));
-  history.replaceState(null, "", location.pathname + location.search + (S.view === "stats" ? "#stats" : ""));
+  T.team = null;
+  syncHash();
   renderList();
 });
 $("list").addEventListener("click", e => {
   if (e.target.closest("[data-act]")) return;   // favourite buttons are handled by the document listener
   const t = e.target.closest("[data-toggle]");
   if (t) { const k = t.dataset.toggle; OPEN.has(k) ? OPEN.delete(k) : OPEN.add(k); renderList(); return; }
+  const tr = e.target.closest("tr[data-team]");
+  if (tr) { T.team = tr.dataset.team; syncHash(); renderList(); window.scrollTo({ top: $("list").offsetTop - 12 }); return; }
+  const th = e.target.closest("th[data-sort]");
+  if (th) { const k = th.dataset.sort; T.desc = T.sort === k ? !T.desc : k !== "name"; T.sort = k; renderList(); return; }
+  const cb = e.target.closest("[data-cols]");
+  if (cb) { T.cols = cb.dataset.cols; renderList(); return; }
+  if (e.target.id === "tback") { T.team = null; syncHash(); renderList(); return; }
   const m = e.target.closest("[data-more]");
   if (m) { const k = m.dataset.more; SHOW_ALL.has(k) ? SHOW_ALL.delete(k) : SHOW_ALL.add(k); renderList(); }
 });
@@ -232,7 +357,7 @@ document.addEventListener("click", e => {
     $("first").hidden = !PROD.use_first;
     $("controls").hidden = false;
     $("view").hidden = false;
-    if (location.hash === "#stats") $("view").querySelector('[data-v="stats"]').click();
+    readHash();
     render();
   } catch (e) {
     $("title").textContent = "找不到這個產品";
