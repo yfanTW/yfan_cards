@@ -43,6 +43,15 @@
       "updated": "2026-11-26",
       "image": "images/2026-topps-chrome-update-series-baseball.webp",
       "image_v": 1795691088
+    },
+    {
+      "slug": "2026-topps-pro-debut-baseball",
+      "name": "2026 Topps Pro Debut Baseball",
+      "year": 2026,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "release_date": "",
+      "updated": "2026-11-26"
     }
   ]
 }
