@@ -12,6 +12,17 @@
       "image_v": 1795691088
     },
     {
+      "slug": "2026-topps-gilded-collection-baseball",
+      "name": "2026 Topps Gilded Collection Baseball",
+      "year": 2026,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "release_date": "",
+      "updated": "2026-11-26",
+      "image": "images/2026-topps-gilded-collection-baseball.webp",
+      "image_v": 1795690775
+    },
+    {
       "slug": "2026-topps-pro-debut-baseball",
       "name": "2026 Topps Pro Debut Baseball",
       "year": 2026,
@@ -23,15 +34,15 @@
       "image_v": 1795695558
     },
     {
-      "slug": "2026-topps-gilded-collection-baseball",
-      "name": "2026 Topps Gilded Collection Baseball",
+      "slug": "2026-topps-allen-ginter-x-baseball",
+      "name": "2026 Topps Allen & Ginter X Baseball",
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
       "release_date": "",
       "updated": "2026-11-26",
-      "image": "images/2026-topps-gilded-collection-baseball.webp",
-      "image_v": 1795690775
+      "image": "images/2026-topps-allen-ginter-x-baseball.webp",
+      "image_v": 1795695940
     },
     {
       "slug": "2026-topps-museum-collection-baseball",
@@ -54,15 +65,6 @@
       "updated": "2026-11-26",
       "image": "images/2026-bowman-baseball.webp",
       "image_v": 1795690651
-    },
-    {
-      "slug": "2026-topps-allen-ginter-x-baseball",
-      "name": "2026 Topps Allen & Ginter X Baseball",
-      "year": 2026,
-      "brand": "Topps",
-      "sport": "Baseball",
-      "release_date": "",
-      "updated": "2026-11-26"
     }
   ]
 }
