@@ -1,0 +1,154 @@
+{
+  "teams": {
+    "New York Yankees": {
+      "abbr": "NYY",
+      "color": "#003087"
+    },
+    "Los Angeles Dodgers": {
+      "abbr": "LAD",
+      "color": "#005A9C"
+    },
+    "Boston Red Sox": {
+      "abbr": "BOS",
+      "color": "#BD3039"
+    },
+    "Chicago Cubs": {
+      "abbr": "CHC",
+      "color": "#0E3386"
+    },
+    "Atlanta Braves": {
+      "abbr": "ATL",
+      "color": "#CE1141"
+    },
+    "San Francisco Giants": {
+      "abbr": "SF",
+      "color": "#FD5A1E"
+    },
+    "Philadelphia Phillies": {
+      "abbr": "PHI",
+      "color": "#E81828"
+    },
+    "Houston Astros": {
+      "abbr": "HOU",
+      "color": "#EB6E1F"
+    },
+    "San Diego Padres": {
+      "abbr": "SD",
+      "color": "#2F241D"
+    },
+    "Seattle Mariners": {
+      "abbr": "SEA",
+      "color": "#0C2C56"
+    },
+    "Cleveland Guardians": {
+      "abbr": "CLE",
+      "color": "#00385D"
+    },
+    "Kansas City Royals": {
+      "abbr": "KC",
+      "color": "#004687"
+    },
+    "Baltimore Orioles": {
+      "abbr": "BAL",
+      "color": "#DF4601"
+    },
+    "Milwaukee Brewers": {
+      "abbr": "MIL",
+      "color": "#FFC52F"
+    },
+    "Minnesota Twins": {
+      "abbr": "MIN",
+      "color": "#002B5C"
+    },
+    "Detroit Tigers": {
+      "abbr": "DET",
+      "color": "#0C2340"
+    },
+    "Cincinnati Reds": {
+      "abbr": "CIN",
+      "color": "#C6011F"
+    },
+    "Toronto Blue Jays": {
+      "abbr": "TOR",
+      "color": "#134A8E"
+    },
+    "Tampa Bay Rays": {
+      "abbr": "TB",
+      "color": "#092C5C"
+    },
+    "Pittsburgh Pirates": {
+      "abbr": "PIT",
+      "color": "#FDB827"
+    },
+    "Texas Rangers": {
+      "abbr": "TEX",
+      "color": "#003278"
+    },
+    "Arizona Diamondbacks": {
+      "abbr": "ARI",
+      "color": "#A71930"
+    },
+    "Colorado Rockies": {
+      "abbr": "COL",
+      "color": "#333366"
+    },
+    "Washington Nationals": {
+      "abbr": "WSH",
+      "color": "#AB0003"
+    },
+    "Miami Marlins": {
+      "abbr": "MIA",
+      "color": "#00A3E0"
+    },
+    "Chicago White Sox": {
+      "abbr": "CWS",
+      "color": "#27251F"
+    },
+    "New York Mets": {
+      "abbr": "NYM",
+      "color": "#002D72"
+    },
+    "Los Angeles Angels": {
+      "abbr": "LAA",
+      "color": "#BA0021"
+    },
+    "Athletics": {
+      "abbr": "OAK",
+      "color": "#003831"
+    },
+    "St. Louis Cardinals": {
+      "abbr": "STL",
+      "color": "#C41E3A"
+    },
+    "National League": {
+      "abbr": "NL",
+      "color": "#003087"
+    },
+    "American League": {
+      "abbr": "AL",
+      "color": "#AB0003"
+    },
+    "YOMIURI GIANTS": {
+      "abbr": "YG",
+      "color": "#1a1a2e"
+    },
+    "USA": {
+      "abbr": "USA",
+      "color": "#B22234"
+    },
+    "Japan": {
+      "abbr": "JPN",
+      "color": "#BC002D"
+    },
+    "Dominican Republic": {
+      "abbr": "DOM",
+      "color": "#002D62"
+    }
+  },
+  "legacy": {
+    "Brooklyn Dodgers": "Los Angeles Dodgers",
+    "Tampa Bay Devil Rays": "Tampa Bay Rays",
+    "Oakland Athletics": "Athletics",
+    "Angels": "Los Angeles Angels"
+  }
+}

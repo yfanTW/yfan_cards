@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Checklists</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav"><span class="sp"></span><a class="pill-link" href="favorites.html">♥ 我的最愛 <span id="favcount"></span></a></nav>
+  <h1>球員卡 Checklist</h1>
+  <div class="sub">選擇產品查看完整清單</div>
+  <div class="panel"><input id="search" class="input" type="search" placeholder="搜尋產品…" style="width:100%"></div>
+  <div id="list"></div>
+</div>
+<script src="assets/common.js"></script>
+<script>
+let PRODUCTS = [];
+const $ = id => document.getElementById(id);
+function render() {
+  const q = playerKey($("search").value);
+  const list = PRODUCTS.filter(p => playerKey(p.name + " " + (p.brand || "") + " " + (p.sport || "")).includes(q));
+  const years = [...new Set(list.map(p => p.year))].sort((a, b) => b - a);
+  $("list").innerHTML = list.length ? years.map(y => `<div class="section-title">${esc(y)}</div><div class="grid">${
+    list.filter(p => p.year === y).map(p => `<a class="prod" href="checklist.html?p=${encodeURIComponent(p.slug)}">
+      <h3>${esc(p.name)}</h3><p>${esc([p.brand, p.sport].filter(Boolean).join(" · "))}${p.updated ? " · 更新 " + esc(p.updated) : ""}</p></a>`).join("")
+  }</div>`).join("") : `<div class="empty">沒有符合的產品</div>`;
+}
+function favCount() {
+  const n = Object.keys(Fav.data.cards).length + Object.keys(Fav.data.players).length;
+  $("favcount").textContent = n ? `(${n})` : "";
+}
+window.onFavsChanged = favCount;
+$("search").addEventListener("input", render);
+(async () => {
+  favCount();
+  try { PRODUCTS = (await loadJSON("products.json")).products; render(); }
+  catch (e) { $("list").innerHTML = `<div class="empty">無法載入產品清單：${esc(e.message)}</div>`; }
+})();
+</script>
+</body>
+</html>

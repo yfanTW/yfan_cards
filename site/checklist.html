@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <a href="index.html">← 所有產品</a><span class="sp"></span>
+    <a class="pill-link" href="favorites.html">♥ 我的最愛</a>
+  </nav>
+  <h1 id="title">載入中…</h1>
+  <div class="sub" id="subtitle"></div>
+
+  <div class="panel" id="controls" hidden>
+    <div class="row">
+      <input id="search" class="input" type="search" placeholder="搜尋球員、卡號、球隊…" autocomplete="off">
+    </div>
+    <div class="row" id="groups"></div>
+    <div class="row pills" id="sets"></div>
+    <div class="row">
+      <select id="team" class="select"></select>
+      <select id="sort" class="select">
+        <option value="order">原始順序</option>
+        <option value="number">按卡號排序</option>
+        <option value="player">按球員排序</option>
+        <option value="team">按球隊排序</option>
+      </select>
+      <div class="seg" id="rc">
+        <button class="btn on" data-v="All">全部</button>
+        <button class="btn rc" data-v="RC">RC</button>
+        <button class="btn" data-v="Non-RC">非RC</button>
+      </div>
+      <div class="seg" id="first" hidden>
+        <button class="btn on" data-v="All">全部</button>
+        <button class="btn first" data-v="1st">1st</button>
+        <button class="btn" data-v="Non-1st">非1st</button>
+      </div>
+      <button class="btn fav" id="favonly">♥ 只看最愛</button>
+    </div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</div>
+<script src="assets/common.js"></script>
+<script>
+const slug = new URLSearchParams(location.search).get("p") || "";
+let PROD = null;
+const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "All", first: "All", fav: false };
+const $ = id => document.getElementById(id);
+
+function matches(c, i) {
+  if (S.group !== "All" && c.group !== S.group) return false;
+  if (S.set !== "All" && c.set !== S.set) return false;
+  if (S.team !== "All" && !splitMulti(c.team).some(t => franchise(t) === S.team)) return false;
+  if (S.rc === "RC" && !c.rc) return false;
+  if (S.rc === "Non-RC" && c.rc) return false;
+  if (S.first === "1st" && !c.first) return false;
+  if (S.first === "Non-1st" && c.first) return false;
+  if (S.fav && !Fav.hasCard(slug, c) && !Fav.anyPlayer(c.player)) return false;
+  if (S.q) {
+    const hay = playerKey([c.player, c.no, c.team, c.set, c.note, (c.tags || []).join(" "), c.first ? "1st" : ""].join(" "));
+    if (!playerKey(S.q).split(" ").every(w => hay.includes(w))) return false;
+  }
+  return true;
+}
+
+function renderControls() {
+  const groups = ["All", ...PROD.groups.filter(g => PROD.cards.some(c => c.group === g))];
+  $("groups").innerHTML = `<div class="seg">${groups.map(g =>
+    `<button class="btn ${S.group === g ? "on" : ""}" data-v="${esc(g)}">${g === "All" ? "全部" : esc(g)}</button>`).join("")}</div>`;
+  const sets = [...new Set(PROD.cards.filter(c => S.group === "All" || c.group === S.group).map(c => c.set))];
+  $("sets").innerHTML = sets.length > 1 ? ["All", ...sets].map(s =>
+    `<button class="pill ${S.set === s ? "on" : ""}" data-v="${esc(s)}">${s === "All" ? "所有子系列" : esc(s)}</button>`).join("") : "";
+  const teams = [...new Set(PROD.cards.flatMap(c => splitMulti(c.team).map(franchise)))].sort();
+  $("team").innerHTML = `<option value="All">所有球隊</option>` + teams.map(t =>
+    `<option value="${esc(t)}" ${S.team === t ? "selected" : ""}>${esc(t)}</option>`).join("");
+  document.querySelectorAll("#rc .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.rc));
+  document.querySelectorAll("#first .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.first));
+  $("favonly").classList.toggle("on", S.fav);
+}
+
+function renderList() {
+  let rows = PROD.cards.map((c, i) => [c, i]).filter(([c, i]) => matches(c, i));
+  const by = {
+    number: (a, b) => collator.compare(a[0].no, b[0].no),
+    player: (a, b) => collator.compare(a[0].player, b[0].player),
+    team: (a, b) => collator.compare(franchise(a[0].team), franchise(b[0].team)) || collator.compare(a[0].no, b[0].no),
+  }[S.sort];
+  const filtered = S.q || S.group !== "All" || S.set !== "All" || S.team !== "All" || S.rc !== "All" || S.first !== "All" || S.fav;
+  $("count").innerHTML = `顯示 <strong>${rows.length}</strong> / ${PROD.cards.length} 張卡片` +
+    (filtered ? `<button class="linkbtn" id="clear">清除篩選</button>` : "");
+  if (!rows.length) { $("list").innerHTML = `<div class="empty">${S.fav ? "這個產品還沒有最愛的卡片或球員" : "沒有符合條件的卡片"}</div>`; return; }
+
+  if (by) { rows.sort(by); $("list").innerHTML = `<div class="cards">${rows.map(([c, i]) => cardRow(slug, c, i)).join("")}</div>`; return; }
+  // Original order: grouped by set with a heading.
+  let html = "", cur = null, buf = [];
+  const flush = () => { if (cur !== null) html += `<div class="sethead">${esc(cur)} <small>${buf.length} 張</small></div><div class="cards">${buf.join("")}</div>`; };
+  for (const [c, i] of rows) {
+    if (c.set !== cur) { flush(); cur = c.set; buf = []; }
+    buf.push(cardRow(slug, c, i));
+  }
+  flush();
+  $("list").innerHTML = html;
+}
+
+function render() { renderControls(); renderList(); }
+window.onFavsChanged = renderList;
+
+// ── Events ──
+let qTimer;
+$("search").addEventListener("input", e => { clearTimeout(qTimer); qTimer = setTimeout(() => { S.q = e.target.value; renderList(); }, 120); });
+$("groups").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.group = b.dataset.v; S.set = "All"; render(); } });
+$("sets").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.set = b.dataset.v; render(); } });
+$("rc").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.rc = b.dataset.v; render(); } });
+$("first").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.first = b.dataset.v; render(); } });
+$("team").addEventListener("change", e => { S.team = e.target.value; renderList(); });
+$("sort").addEventListener("change", e => { S.sort = e.target.value; renderList(); });
+$("favonly").addEventListener("click", () => { S.fav = !S.fav; render(); });
+document.addEventListener("click", e => {
+  if (e.target.id === "clear") { Object.assign(S, { q: "", group: "All", set: "All", team: "All", rc: "All", first: "All", fav: false }); $("search").value = ""; render(); return; }
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  if (b.dataset.act === "card") {
+    const c = PROD.cards[+b.dataset.k.split("|")[1]];
+    toast(Fav.toggleCard(slug, c) ? "已加入最愛卡片" : "已移除最愛卡片");
+  } else {
+    const n = b.dataset.name;
+    toast(Fav.togglePlayer(n) ? `已將 ${n} 加入最愛球員` : `已移除最愛球員 ${n}`);
+  }
+  renderList();
+});
+
+(async () => {
+  try {
+    if (!/^[a-z0-9-]+$/.test(slug)) throw new Error("網址缺少產品代號");
+    await loadTeams();
+    PROD = await loadJSON("products/" + slug + ".json");
+    document.title = PROD.name + " Checklist";
+    $("title").textContent = PROD.name;
+    const rc = PROD.cards.filter(c => c.rc).length;
+    $("subtitle").textContent = `${PROD.cards.length} 張卡片 · ${new Set(PROD.cards.map(c => c.set)).size} 個子系列 · ${rc} 張 RC` +
+      (PROD.use_first ? ` · ${PROD.cards.filter(c => c.first).length} 張 1st` : "");
+    $("first").hidden = !PROD.use_first;
+    $("controls").hidden = false;
+    render();
+  } catch (e) {
+    $("title").textContent = "找不到這個產品";
+    $("subtitle").textContent = e.message;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Favorites</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav"><a href="index.html">← 所有產品</a></nav>
+  <h1>♥ 我的最愛</h1>
+  <div class="sub">最愛只存在這個瀏覽器裡。換裝置時請用下方的「備份 / 還原」。</div>
+
+  <div class="section-title">☆ 最愛球員</div>
+  <div id="players"></div>
+  <div class="section-title">♡ 最愛卡片</div>
+  <div id="cards"></div>
+
+  <div class="section-title">備份 / 還原</div>
+  <div class="panel">
+    <div class="row">
+      <button class="btn" id="export">產生備份代碼</button>
+      <button class="btn" id="import">貼上代碼還原（合併）</button>
+    </div>
+    <div class="row"><textarea id="code" class="input" placeholder="備份代碼會出現在這裡；或把另一台裝置的代碼貼到這裡再按「還原」"></textarea></div>
+  </div>
+</div>
+<script src="assets/common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let PRODUCTS = [], LOADED = {};   // slug -> product json
+
+function render() {
+  const players = Object.entries(Fav.data.players).sort((a, b) => collator.compare(a[1].name, b[1].name));
+  $("players").innerHTML = players.length ? `<div class="pills" style="flex-wrap:wrap">${players.map(([k, v]) => {
+    const n = Object.values(LOADED).reduce((s, p) => s + p.cards.filter(c => splitMulti(c.player).some(x => playerKey(x) === k)).length, 0);
+    return `<button class="pill on" data-act="player" data-name="${esc(v.name)}" title="點一下移除">★ ${esc(v.name)} <span style="opacity:.6">${n} 張</span> ✕</button>`;
+  }).join("")}</div>` : `<div class="empty">在 checklist 裡點球員旁邊的 ☆ 就能加入</div>`;
+
+  // Group favourite cards by product; use live data when available, otherwise the saved snapshot.
+  const bySlug = {};
+  for (const k of Object.keys(Fav.data.cards)) { const i = k.indexOf("/"); (bySlug[k.slice(0, i)] ||= []).push(k.slice(i + 1)); }
+  const slugs = Object.keys(bySlug);
+  $("cards").innerHTML = slugs.length ? slugs.map(slug => {
+    const prod = LOADED[slug];
+    const name = prod ? prod.name : (PRODUCTS.find(p => p.slug === slug) || {}).name || slug;
+    const rows = bySlug[slug].map(id => {
+      const idx = prod ? prod.cards.findIndex(c => c.id === id) : -1;
+      if (idx >= 0) return cardRow(slug, prod.cards[idx], idx);
+      const s = Fav.data.cards[slug + "/" + id];
+      return cardRow(slug, { id, no: s.n, player: s.p, set: s.s + "（已不在清單中）", team: s.t, rc: false }, "x:" + id);
+    });
+    return `<div class="sethead"><a href="checklist.html?p=${encodeURIComponent(slug)}">${esc(name)} →</a> <small>${rows.length} 張</small></div><div class="cards">${rows.join("")}</div>`;
+  }).join("") : `<div class="empty">在 checklist 裡點卡片右邊的 ♡ 就能加入</div>`;
+}
+window.onFavsChanged = render;
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  if (b.dataset.act === "player") Fav.togglePlayer(b.dataset.name);
+  else {
+    const [slug, i] = b.dataset.k.split("|");
+    const card = i.startsWith("x:") ? { id: i.slice(2) } : LOADED[slug].cards[+i];
+    Fav.toggleCard(slug, card);
+  }
+  render();
+});
+$("export").onclick = () => { $("code").value = Fav.exportCode(); $("code").select(); try { navigator.clipboard.writeText($("code").value); toast("已複製備份代碼"); } catch (e) {} };
+$("import").onclick = async () => {
+  try { Fav.importCode($("code").value); toast("還原完成"); await loadNeeded(); render(); }
+  catch (e) { toast("代碼無效：" + e.message); }
+};
+
+async function loadNeeded() {
+  // Load products that have favourite cards; load all products for player counts.
+  await Promise.all(PRODUCTS.map(async p => {
+    if (LOADED[p.slug]) return;
+    try { LOADED[p.slug] = await loadJSON("products/" + p.slug + ".json"); } catch (e) { console.warn(e); }
+  }));
+}
+(async () => {
+  render();
+  await loadTeams();
+  try { PRODUCTS = (await loadJSON("products.json")).products; } catch (e) { console.warn(e); }
+  await loadNeeded();
+  render();
+})();
+</script>
+</body>
+</html>

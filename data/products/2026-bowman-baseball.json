@@ -1,0 +1,123 @@
+{
+  "slug": "2026-bowman-baseball",
+  "name": "2026 Bowman Baseball",
+  "use_first": true,
+  "groups": [
+    "Base",
+    "Insert",
+    "Autograph",
+    "Parallel"
+  ],
+  "cards": [
+    {
+      "id": "base/1",
+      "no": "1",
+      "player": "Aaron Judge",
+      "team": "New York Yankees",
+      "group": "Base",
+      "set": "Base",
+      "rc": false,
+      "first": false,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "base/2",
+      "no": "2",
+      "player": "Yoshinobu Yamamoto",
+      "team": "Los Angeles Dodgers",
+      "group": "Base",
+      "set": "Base",
+      "rc": false,
+      "first": false,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "base/3",
+      "no": "3",
+      "player": "Chase Burns",
+      "team": "Cincinnati Reds",
+      "group": "Base",
+      "set": "Base",
+      "rc": true,
+      "first": false,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "base/5",
+      "no": "5",
+      "player": "Julio Rodríguez",
+      "team": "Seattle Mariners",
+      "group": "Base",
+      "set": "Base",
+      "rc": false,
+      "first": false,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "chrome-prospects/bcp-1",
+      "no": "BCP-1",
+      "player": "Chase Burns",
+      "team": "Cincinnati Reds",
+      "group": "Insert",
+      "set": "Chrome Prospects",
+      "rc": true,
+      "first": true,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "chrome-prospects/bcp-2",
+      "no": "BCP-2",
+      "player": "Roman Anthony",
+      "team": "Boston Red Sox",
+      "group": "Insert",
+      "set": "Chrome Prospects",
+      "rc": true,
+      "first": false,
+      "tags": [],
+      "note": ""
+    },
+    {
+      "id": "anime/an-1",
+      "no": "AN-1",
+      "player": "Shohei Ohtani",
+      "team": "Los Angeles Dodgers",
+      "group": "Insert",
+      "set": "Anime",
+      "rc": false,
+      "first": false,
+      "tags": [
+        "SSP"
+      ],
+      "note": ""
+    },
+    {
+      "id": "chrome-prospects-autographs/cpa-jw",
+      "no": "CPA-JW",
+      "player": "Jackson Chourio",
+      "team": "Milwaukee Brewers",
+      "group": "Autograph",
+      "set": "Chrome Prospects Autographs",
+      "rc": false,
+      "first": false,
+      "tags": [],
+      "note": "Gold Ink"
+    },
+    {
+      "id": "draft-pick-pairings/dpp-1",
+      "no": "DPP-1",
+      "player": "Aaron Judge / Julio Rodríguez",
+      "team": "New York Yankees / Seattle Mariners",
+      "group": "Autograph",
+      "set": "Draft Pick Pairings",
+      "rc": false,
+      "first": false,
+      "tags": [],
+      "note": ""
+    }
+  ]
+}
