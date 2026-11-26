@@ -10,7 +10,11 @@
 </head>
 <body>
 <div class="wrap">
-  <nav class="topnav"><a href="index.html">← 所有產品</a></nav>
+  <nav class="topnav">
+    <button class="pill-link backbtn" id="backbtn" type="button">← 回上一頁</button>
+    <span class="sp"></span>
+    <a href="index.html">所有產品</a>
+  </nav>
   <h1>♥ 我的最愛</h1>
   <div class="sub">最愛只存在這個瀏覽器裡。換裝置時請用下方的「備份 / 還原」。</div>
 
@@ -31,6 +35,15 @@
 <script src="assets/common.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+
+// Back: return to the page you came from on this site (keeps its filters/scroll);
+// if you opened 我的最愛 directly (bookmark, new tab), go to the product list instead.
+$("backbtn").onclick = () => {
+  let fromHere = false;
+  try { fromHere = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (e) {}
+  if (fromHere && history.length > 1) history.back();
+  else location.href = "index.html";
+};
 let PRODUCTS = [], LOADED = {};   // slug -> product json
 
 function render() {
