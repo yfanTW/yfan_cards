@@ -103,3 +103,30 @@ function cardRow(slug, card, idx) {
     <div class="icons">${stars}<button class="icon heart ${Fav.hasCard(slug, card) ? "on" : ""}" data-act="card" data-k="${esc(slug)}|${idx}" title="最愛卡片" aria-label="最愛卡片">${Fav.hasCard(slug, card) ? "♥" : "♡"}</button></div>
   </div>`;
 }
+
+// In-page confirmation dialog (works everywhere, unlike window.confirm in some embedded browsers).
+// confirmDialog("訊息", { ok: "移除", danger: true }) -> Promise<boolean>
+function confirmDialog(message, opt = {}) {
+  let d = document.getElementById("confirm-dlg");
+  if (!d) {
+    d = document.createElement("dialog");
+    d.id = "confirm-dlg"; d.className = "confirm";
+    d.innerHTML = `<p class="msg"></p><div class="actions"><button class="btn" data-r="0">取消</button><button class="btn ok" data-r="1">確定</button></div>`;
+    document.body.appendChild(d);
+  }
+  d.querySelector(".msg").textContent = message;
+  const ok = d.querySelector(".ok");
+  ok.textContent = opt.ok || "確定";
+  ok.classList.toggle("danger", !!opt.danger);
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; d.close(); resolve(v); };
+    d.onclick = e => {
+      const b = e.target.closest("[data-r]");
+      if (b) finish(b.dataset.r === "1");
+      else if (e.target === d) finish(false);          // click on the backdrop
+    };
+    d.onclose = () => finish(false);                     // Esc
+    d.showModal(); ok.focus();
+  });
+}

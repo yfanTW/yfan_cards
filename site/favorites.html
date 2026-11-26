@@ -71,10 +71,13 @@ function render() {
 }
 window.onFavsChanged = render;
 
-document.addEventListener("click", e => {
+document.addEventListener("click", async e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
-  if (b.dataset.act === "player") Fav.togglePlayer(b.dataset.name);
-  else {
+  if (b.dataset.act === "player") {
+    const name = b.dataset.name;
+    if (Fav.hasPlayer(name) && !(await confirmDialog(`要把「${name}」從最愛球員移除嗎？`, { ok: "移除", danger: true }))) return;
+    Fav.togglePlayer(name);
+  } else {
     const [slug, i] = b.dataset.k.split("|");
     const card = i.startsWith("x:") ? { id: i.slice(2) } : LOADED[slug].cards[+i];
     Fav.toggleCard(slug, card);
