@@ -14,6 +14,10 @@
   </nav>
   <h1 id="title">載入中…</h1>
   <div class="sub" id="subtitle"></div>
+  <div class="seg viewtoggle" id="view" hidden>
+    <button class="btn on" data-v="list">清單</button>
+    <button class="btn" data-v="stats">統計</button>
+  </div>
 
   <div class="panel" id="controls" hidden>
     <div class="row">
@@ -50,7 +54,10 @@
 <script>
 const slug = new URLSearchParams(location.search).get("p") || "";
 let PROD = null;
-const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "All", first: "All", fav: false };
+const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "All", first: "All", fav: false, view: "list" };
+const OPEN = new Set();     // expanded stats rows ("team:..." / "player:...")
+const SHOW_ALL = new Set(); // stats lists showing more than the top 15
+const TOP = 15;
 const $ = id => document.getElementById(id);
 
 function matches(c, i) {
@@ -86,6 +93,7 @@ function renderControls() {
 
 function renderList() {
   let rows = PROD.cards.map((c, i) => [c, i]).filter(([c, i]) => matches(c, i));
+  $("sort").hidden = S.view === "stats";
   const by = {
     number: (a, b) => collator.compare(a[0].no, b[0].no),
     player: (a, b) => collator.compare(a[0].player, b[0].player),
@@ -95,6 +103,7 @@ function renderList() {
   $("count").innerHTML = `顯示 <strong>${rows.length}</strong> / ${PROD.cards.length} 張卡片` +
     (filtered ? `<button class="linkbtn" id="clear">清除篩選</button>` : "");
   if (!rows.length) { $("list").innerHTML = `<div class="empty">${S.fav ? "這個產品還沒有最愛的卡片或球員" : "沒有符合條件的卡片"}</div>`; return; }
+  if (S.view === "stats") { $("list").innerHTML = renderStats(rows); return; }
 
   if (by) { rows.sort(by); $("list").innerHTML = `<div class="cards">${rows.map(([c, i]) => cardRow(slug, c, i)).join("")}</div>`; return; }
   // Original order: grouped by set with a heading.
@@ -106,6 +115,68 @@ function renderList() {
   }
   flush();
   $("list").innerHTML = html;
+}
+
+// ── Stats view (follows the current filters, like the list) ──
+function renderStats(rows) {
+  const teamCards = new Map(), playerCards = new Map(), playerTeam = new Map(), playerRC = new Set(), playerFirst = new Set();
+  const push = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+  for (const r of rows) {
+    const c = r[0];
+    const teams = splitMulti(c.team), players = splitMulti(c.player);
+    new Set(teams.map(franchise)).forEach(t => push(teamCards, t, r));   // a card counts once per team
+    players.forEach((p, j) => {
+      push(playerCards, p, r);
+      const t = franchise(teams[j] || teams[0] || "");
+      // Prefer the team from a single-player card.
+      if (!playerTeam.has(p) || players.length === 1) playerTeam.set(p, t);
+      if (c.rc) playerRC.add(p);
+      if (c.first) playerFirst.add(p);
+    });
+  }
+  const cards = rows.map(r => r[0]);
+  const chips = [
+    ["總卡數", cards.length, "#818cf8"],
+    ["RC 新人卡", cards.filter(c => c.rc).length, "#f59e0b"],
+    ...(PROD.use_first ? [["1st", cards.filter(c => c.first).length, "#22d3ee"]] : []),
+    ["簽名卡", cards.filter(c => c.group === "Autograph").length, "#10b981"],
+    ["球隊數", teamCards.size, "#f97316"],
+    ["球員數", playerCards.size, "#f472b6"],
+  ];
+  const sets = new Map(); cards.forEach(c => sets.set(c.set, (sets.get(c.set) || 0) + 1));
+  return `<div class="chips">${chips.map(([l, v, col]) => `<div class="chip"><span>${l}</span><b style="color:${col}">${v}</b></div>`).join("")}</div>
+  <div class="statgrid">
+    ${rankBox("teams", "球隊出現次數", "支球隊", [...teamCards].map(([t, rs]) => ({ key: "team:" + t, name: t, team: t, rows: rs })))}
+    ${rankBox("players", "球員出現次數", "名球員", [...playerCards].map(([p, rs]) => ({ key: "player:" + p, name: p, team: playerTeam.get(p), rows: rs, rc: playerRC.has(p), first: playerFirst.has(p) })))}
+    ${sets.size > 1 ? rankBox("sets", "子系列卡數", "個子系列", [...sets].map(([s, n]) => ({ key: "set:" + s, name: s, count: n })), true) : ""}
+  </div>`;
+}
+
+function rankBox(id, title, unit, items, plain) {
+  items.forEach(it => { if (it.count == null) it.count = it.rows.length; });
+  items.sort((a, b) => b.count - a.count || collator.compare(a.name, b.name));
+  const all = SHOW_ALL.has(id), shown = all ? items : items.slice(0, TOP);
+  const max = items[0] ? items[0].count : 1;
+  return `<div class="statbox"><div class="stattitle">${title}</div>
+    ${shown.map(it => {
+      const info = it.team ? teamInfo(it.team) : { color: "#6366f1" };
+      const open = !plain && OPEN.has(it.key);
+      const isP = it.key.startsWith("player:");
+      const star = isP ? `<button class="icon star sm ${Fav.hasPlayer(it.name) ? "on" : ""}" data-act="player" data-name="${esc(it.name)}" title="最愛球員">${Fav.hasPlayer(it.name) ? "★" : "☆"}</button>` : "";
+      return `<div class="rank ${open ? "open" : ""}">
+        <div class="rankrow" ${plain ? "" : `data-toggle="${esc(it.key)}"`}>
+          ${plain ? "" : `<span class="caret">▶</span>`}
+          ${it.team ? `<span class="abbr" style="background:${esc(info.color)}">${esc(info.abbr)}</span>` : ""}
+          <span class="rname">${esc(it.name)}</span>
+          ${it.rc ? '<span class="badge rc">RC</span>' : ""}${it.first ? '<span class="badge first">1st</span>' : ""}
+          ${star}<span class="rcount">${it.count}</span>
+        </div>
+        <div class="bar"><div style="width:${Math.max(2, Math.round(it.count / max * 100))}%;background:${esc(info.color)}cc"></div></div>
+        ${open ? `<div class="cards mini">${it.rows.map(([c, i]) => cardRow(slug, c, i)).join("")}</div>` : ""}
+      </div>`;
+    }).join("")}
+    ${items.length > TOP ? `<button class="morebtn" data-more="${id}">${all ? `收起（顯示前 ${TOP} 名）` : `展開全部（共 ${items.length} ${unit}）`}</button>` : ""}
+  </div>`;
 }
 
 function render() { renderControls(); renderList(); }
@@ -121,6 +192,20 @@ $("first").addEventListener("click", e => { const b = e.target.closest("[data-v]
 $("team").addEventListener("change", e => { S.team = e.target.value; renderList(); });
 $("sort").addEventListener("change", e => { S.sort = e.target.value; renderList(); });
 $("favonly").addEventListener("click", () => { S.fav = !S.fav; render(); });
+$("view").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]"); if (!b) return;
+  S.view = b.dataset.v;
+  document.querySelectorAll("#view .btn").forEach(x => x.classList.toggle("on", x === b));
+  history.replaceState(null, "", location.pathname + location.search + (S.view === "stats" ? "#stats" : ""));
+  renderList();
+});
+$("list").addEventListener("click", e => {
+  if (e.target.closest("[data-act]")) return;   // favourite buttons are handled by the document listener
+  const t = e.target.closest("[data-toggle]");
+  if (t) { const k = t.dataset.toggle; OPEN.has(k) ? OPEN.delete(k) : OPEN.add(k); renderList(); return; }
+  const m = e.target.closest("[data-more]");
+  if (m) { const k = m.dataset.more; SHOW_ALL.has(k) ? SHOW_ALL.delete(k) : SHOW_ALL.add(k); renderList(); }
+});
 document.addEventListener("click", e => {
   if (e.target.id === "clear") { Object.assign(S, { q: "", group: "All", set: "All", team: "All", rc: "All", first: "All", fav: false }); $("search").value = ""; render(); return; }
   const b = e.target.closest("[data-act]"); if (!b) return;
@@ -146,6 +231,8 @@ document.addEventListener("click", e => {
       (PROD.use_first ? ` · ${PROD.cards.filter(c => c.first).length} 張 1st` : "");
     $("first").hidden = !PROD.use_first;
     $("controls").hidden = false;
+    $("view").hidden = false;
+    if (location.hash === "#stats") $("view").querySelector('[data-v="stats"]').click();
     render();
   } catch (e) {
     $("title").textContent = "找不到這個產品";
