@@ -87,13 +87,18 @@ function matches(c, i) {
   return true;
 }
 
-// True when the current group/set filter is narrowed to something that tracks pulled cards.
+// True when the current filter is narrowed to sets that ALL track pulled cards:
+//  - a set is picked and that set tracks pulled (e.g. 24K, MLB Debut Patch Autographs), or
+//  - only a group is picked and every set in it tracks pulled (e.g. Autograph Relic in
+//    Chrome Update, which holds just MLB Debut Patch Autographs).
 // Used by the filter bar and the team view so "已抽出" only appears where it applies.
 function pulledInScope() {
   const tracked = new Set(PROD.pulled_sets || []);
-  if (!tracked.size || (S.group === "All" && S.set === "All")) return false;
-  return PROD.cards.some(c => tracked.has(c.set) &&
-    (S.group === "All" || c.group === S.group) && (S.set === "All" || c.set === S.set));
+  if (!tracked.size) return false;
+  if (S.set !== "All") return tracked.has(S.set);
+  if (S.group === "All") return false;
+  const sets = new Set(PROD.cards.filter(c => c.group === S.group).map(c => c.set));
+  return sets.size > 0 && [...sets].every(s => tracked.has(s));
 }
 
 function renderControls() {
