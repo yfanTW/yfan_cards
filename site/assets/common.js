@@ -93,10 +93,10 @@ function cardRow(slug, card, idx) {
   const tags = (card.tags || []).map(t => `<span class="badge tag">${esc(t)}</span>`).join("");
   const stars = players.map(p =>
     `<button class="icon star ${Fav.hasPlayer(p) ? "on" : ""}" data-act="player" data-name="${esc(p)}" title="最愛球員：${esc(p)}" aria-label="最愛球員 ${esc(p)}">${Fav.hasPlayer(p) ? "★" : "☆"}</button>`).join("");
-  return `<div class="card ${favP ? "favplayer" : ""}" style="--team:${esc(t0.color)}">
+  return `<div class="card ${favP ? "favplayer" : ""} ${card.pulled ? "is-pulled" : ""}" style="--team:${esc(t0.color)}">
     <div class="no">#${esc(card.no)}</div>
     <div class="who">
-      <div class="player">${esc(card.player)} ${card.rc ? '<span class="badge rc">RC</span>' : ""}${card.first ? '<span class="badge first">1st</span>' : ""}${tags}</div>
+      <div class="player">${esc(card.player)} ${card.rc ? '<span class="badge rc">RC</span>' : ""}${card.first ? '<span class="badge first">1st</span>' : ""}${card.pulled ? '<span class="badge pulled">已抽出</span>' : ""}${tags}</div>
       <div class="meta">${esc(card.set)}${card.note ? " · " + esc(card.note) : ""}</div>
     </div>
     <div class="team">${teams.map(t => `<span class="abbr" style="background:${esc(teamInfo(t).color)}">${esc(teamInfo(t).abbr)}</span>`).join("")}<span class="full">${esc(card.team)}</span></div>

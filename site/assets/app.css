@@ -78,6 +78,9 @@ h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
 .badge.rc { background: var(--rc); color: #1e1b06; }
 .badge.first { background: #22d3ee; color: #062a30; }
 .btn.on.first { background: #0891b2; }
+.badge.pulled { background: #f43f5e; color: #fff; }
+.btn.on.pulled { background: #e11d48; }
+.card.is-pulled .player, .card.is-pulled .no { opacity: .55; text-decoration: line-through; text-decoration-color: rgba(244,63,94,.7); }
 .badge.tag { background: rgba(255,255,255,0.12); color: var(--muted); }
 .icons { display: flex; gap: 2px; }
 .icon {
@@ -138,6 +141,8 @@ textarea.input { width: 100%; min-height: 90px; font-family: ui-monospace, Conso
 .ttable th.rc { color: var(--rc); } .ttable th.first { color: #22d3ee; }
 .ttable td { text-align: right; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
 .ttable td.rc { color: #fcd34d; } .ttable td.first { color: #67e8f9; }
+.ttable th.pulled { color: #fb7185; } .ttable td.pulled { color: #fda4af; }
+.chip b.pulled { color: #fb7185; }
 .ttable td.zero { color: #334155; }
 .ttable .tname { text-align: left; font-family: inherit; position: sticky; left: 0; background: #172033; min-width: 190px; }
 .ttable th.tname { background: #1e293b; z-index: 1; }

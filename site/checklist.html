@@ -44,6 +44,11 @@
         <button class="btn first" data-v="1st">1st</button>
         <button class="btn" data-v="Non-1st">非1st</button>
       </div>
+      <div class="seg" id="pulled" hidden title="已抽出 = 這張卡已經有人抽到">
+        <button class="btn on" data-v="All">全部</button>
+        <button class="btn" data-v="hide">隱藏已抽出</button>
+        <button class="btn pulled" data-v="only">只看已抽出</button>
+      </div>
       <button class="btn fav" id="favonly">♥ 只看最愛</button>
     </div>
   </div>
@@ -55,7 +60,7 @@
 <script>
 const slug = new URLSearchParams(location.search).get("p") || "";
 let PROD = null;
-const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "All", first: "All", fav: false, view: "list" };
+const S = { q: "", group: "All", set: "All", team: "All", sort: "order", rc: "All", first: "All", pulled: "All", fav: false, view: "list" };
 const OPEN = new Set();     // expanded stats rows ("team:..." / "player:...")
 const SHOW_ALL = new Set(); // stats lists showing more than the top 15
 const TOP = 15;
@@ -70,6 +75,8 @@ function matches(c, i) {
   if (S.rc === "Non-RC" && c.rc) return false;
   if (S.first === "1st" && !c.first) return false;
   if (S.first === "Non-1st" && c.first) return false;
+  if (S.pulled === "hide" && c.pulled) return false;
+  if (S.pulled === "only" && !c.pulled) return false;
   if (S.fav && !Fav.hasCard(slug, c) && !Fav.anyPlayer(c.player)) return false;
   if (S.q) {
     const hay = playerKey([c.player, c.no, c.team, c.set, c.note, (c.tags || []).join(" "), c.first ? "1st" : ""].join(" "));
@@ -90,6 +97,7 @@ function renderControls() {
     `<option value="${esc(t)}" ${S.team === t ? "selected" : ""}>${esc(t)}</option>`).join("");
   document.querySelectorAll("#rc .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.rc));
   document.querySelectorAll("#first .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.first));
+  document.querySelectorAll("#pulled .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.pulled));
   $("favonly").classList.toggle("on", S.fav);
 }
 
@@ -101,7 +109,7 @@ function renderList() {
     player: (a, b) => collator.compare(a[0].player, b[0].player),
     team: (a, b) => collator.compare(franchise(a[0].team), franchise(b[0].team)) || collator.compare(a[0].no, b[0].no),
   }[S.sort];
-  const filtered = S.q || S.group !== "All" || S.set !== "All" || S.team !== "All" || S.rc !== "All" || S.first !== "All" || S.fav;
+  const filtered = S.q || S.group !== "All" || S.set !== "All" || S.team !== "All" || S.rc !== "All" || S.first !== "All" || S.pulled !== "All" || S.fav;
   $("count").innerHTML = `顯示 <strong>${rows.length}</strong> / ${PROD.cards.length} 張卡片` +
     (filtered ? `<button class="linkbtn" id="clear">清除篩選</button>` : "");
   if (!rows.length) { $("list").innerHTML = `<div class="empty">${S.fav ? "這個產品還沒有最愛的卡片或球員" : "沒有符合條件的卡片"}</div>`; return; }
@@ -142,7 +150,8 @@ function renderStats(rows) {
     ["總卡數", cards.length, "#818cf8"],
     ["RC 新人卡", cards.filter(c => c.rc).length, "#f59e0b"],
     ...(PROD.use_first ? [["1st", cards.filter(c => c.first).length, "#22d3ee"]] : []),
-    ["簽名卡", cards.filter(c => c.group === "Autograph").length, "#10b981"],
+    ["簽名卡", cards.filter(c => /Autograph/.test(c.group)).length, "#10b981"],
+    ...((PROD.pulled_sets || []).length ? [["已抽出", cards.filter(c => c.pulled).length, "#f43f5e"]] : []),
     ["球隊數", teamCards.size, "#f97316"],
     ["球員數", playerCards.size, "#f472b6"],
   ];
@@ -190,6 +199,7 @@ function teamColumns(rows) {
   const cols = [{ k: "total", label: "總數", test: () => true },
                 { k: "rc", label: "RC", test: c => c.rc, cls: "rc" }];
   if (PROD.use_first) cols.push({ k: "first", label: "1st", test: c => c.first, cls: "first" });
+  if ((PROD.pulled_sets || []).length) cols.push({ k: "pulled", label: "已抽出", test: c => c.pulled, cls: "pulled" });
   const present = T.cols === "set"
     ? [...new Set(rows.map(r => r[0].set))]
     : PROD.groups.filter(g => rows.some(r => r[0].group === g));
@@ -306,6 +316,7 @@ $("groups").addEventListener("click", e => { const b = e.target.closest("[data-v
 $("sets").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.set = b.dataset.v; render(); } });
 $("rc").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.rc = b.dataset.v; render(); } });
 $("first").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.first = b.dataset.v; render(); } });
+$("pulled").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) { S.pulled = b.dataset.v; render(); } });
 $("team").addEventListener("change", e => { S.team = e.target.value; renderList(); });
 $("sort").addEventListener("change", e => { S.sort = e.target.value; renderList(); });
 $("favonly").addEventListener("click", () => { S.fav = !S.fav; render(); });
@@ -332,7 +343,7 @@ $("list").addEventListener("click", e => {
   if (m) { const k = m.dataset.more; SHOW_ALL.has(k) ? SHOW_ALL.delete(k) : SHOW_ALL.add(k); renderList(); }
 });
 document.addEventListener("click", e => {
-  if (e.target.id === "clear") { Object.assign(S, { q: "", group: "All", set: "All", team: "All", rc: "All", first: "All", fav: false }); $("search").value = ""; render(); return; }
+  if (e.target.id === "clear") { Object.assign(S, { q: "", group: "All", set: "All", team: "All", rc: "All", first: "All", pulled: "All", fav: false }); $("search").value = ""; render(); return; }
   const b = e.target.closest("[data-act]"); if (!b) return;
   if (b.dataset.act === "card") {
     const c = PROD.cards[+b.dataset.k.split("|")[1]];
@@ -355,6 +366,9 @@ document.addEventListener("click", e => {
     $("subtitle").textContent = `${PROD.cards.length} 張卡片 · ${new Set(PROD.cards.map(c => c.set)).size} 個子系列 · ${rc} 張 RC` +
       (PROD.use_first ? ` · ${PROD.cards.filter(c => c.first).length} 張 1st` : "");
     $("first").hidden = !PROD.use_first;
+    const tracked = PROD.cards.filter(c => (PROD.pulled_sets || []).includes(c.set));
+    $("pulled").hidden = !tracked.length;
+    if (tracked.length) $("subtitle").textContent += ` · ${PROD.cards.filter(c => c.pulled).length} / ${tracked.length} 張已抽出`;
     $("controls").hidden = false;
     $("view").hidden = false;
     readHash();
