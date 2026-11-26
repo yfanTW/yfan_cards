@@ -85,6 +85,15 @@ function matches(c, i) {
   return true;
 }
 
+// True when the current group/set filter is narrowed to something that tracks pulled cards.
+// Used by the filter bar and the team view so "已抽出" only appears where it applies.
+function pulledInScope() {
+  const tracked = new Set(PROD.pulled_sets || []);
+  if (!tracked.size || (S.group === "All" && S.set === "All")) return false;
+  return PROD.cards.some(c => tracked.has(c.set) &&
+    (S.group === "All" || c.group === S.group) && (S.set === "All" || c.set === S.set));
+}
+
 function renderControls() {
   const groups = ["All", ...PROD.groups.filter(g => PROD.cards.some(c => c.group === g))];
   $("groups").innerHTML = `<div class="seg">${groups.map(g =>
@@ -99,10 +108,7 @@ function renderControls() {
   document.querySelectorAll("#first .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.first));
   // The pulled filter only makes sense once the view is narrowed to a group / set that
   // tracks pulled cards (e.g. Autograph Relic → MLB Debut Patch Autographs).
-  const tracked = new Set(PROD.pulled_sets || []);
-  const scoped = S.group !== "All" || S.set !== "All";
-  const showPulled = scoped && PROD.cards.some(c => tracked.has(c.set) &&
-    (S.group === "All" || c.group === S.group) && (S.set === "All" || c.set === S.set));
+  const showPulled = pulledInScope();
   $("pulled").hidden = !showPulled;
   if (!showPulled) S.pulled = "All";
   document.querySelectorAll("#pulled .btn").forEach(b => b.classList.toggle("on", b.dataset.v === S.pulled));
@@ -207,7 +213,7 @@ function teamColumns(rows) {
   const cols = [{ k: "total", label: "總數", test: () => true },
                 { k: "rc", label: "RC", test: c => c.rc, cls: "rc" }];
   if (PROD.use_first) cols.push({ k: "first", label: "1st", test: c => c.first, cls: "first" });
-  if ((PROD.pulled_sets || []).length) cols.push({ k: "pulled", label: "已抽出", test: c => c.pulled, cls: "pulled" });
+  if (pulledInScope()) cols.push({ k: "pulled", label: "已抽出", test: c => c.pulled, cls: "pulled" });
   const present = T.cols === "set"
     ? [...new Set(rows.map(r => r[0].set))]
     : PROD.groups.filter(g => rows.some(r => r[0].group === g));
