@@ -143,6 +143,10 @@
     "Dominican Republic": {
       "abbr": "DOM",
       "color": "#002D62"
+    },
+    "Non-MLB": {
+      "abbr": "NON",
+      "color": "#64748b"
     }
   },
   "legacy": {
@@ -264,6 +268,7 @@
     "New Hampshire Fisher Cats": "Toronto Blue Jays",
     "Tacoma Rainiers": "Seattle Mariners",
     "Cedar Rapids Kernals": "Minnesota Twins",
-    "Great Lake Loons": "Los Angeles Dodgers"
+    "Great Lake Loons": "Los Angeles Dodgers",
+    "St. Louis Browns": "Baltimore Orioles"
   }
 }

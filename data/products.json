@@ -54,6 +54,15 @@
       "updated": "2026-11-26",
       "image": "images/2026-bowman-baseball.webp",
       "image_v": 1795690651
+    },
+    {
+      "slug": "2026-topps-allen-ginter-x-baseball",
+      "name": "2026 Topps Allen & Ginter X Baseball",
+      "year": 2026,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "release_date": "",
+      "updated": "2026-11-26"
     }
   ]
 }
